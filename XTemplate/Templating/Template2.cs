@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using NewLife.Collections;
-using NewLife.Configuration;
 using NewLife.Log;
 
 namespace XTemplate.Templating
@@ -21,7 +17,7 @@ namespace XTemplate.Templating
         {
             if (String.IsNullOrEmpty(str)) return null;
 
-            MD5 md5 = MD5.Create();
+            var md5 = MD5.Create();
             return BitConverter.ToString(md5.ComputeHash(Encoding.UTF8.GetBytes(str))).Replace("-", null);
         }
 
@@ -31,14 +27,14 @@ namespace XTemplate.Templating
         /// <returns></returns>
         public static String GetClassName(String fileName)
         {
-            String name = fileName;
+            var name = fileName;
             //if (name.Contains(".")) name = name.Substring(0, name.LastIndexOf("."));
             //name = name.Replace(@"\", "_").Replace(@"/", "_").Replace(".", "_").Replace("-", "_");
             foreach (var item in _Filter)
             {
                 name = name.Replace(item, '_');
             }
-            name = name.Replace(Path.VolumeSeparatorChar, '_'); 
+            name = name.Replace(Path.VolumeSeparatorChar, '_');
             name = name.Replace(Path.DirectorySeparatorChar, '_');
             name = name.Replace(Path.AltDirectorySeparatorChar, '_');
             name = name.Replace(Path.PathSeparator, '_');
@@ -47,7 +43,7 @@ namespace XTemplate.Templating
 
         /// <summary>已重载。</summary>
         /// <returns></returns>
-        public override string ToString()
+        public override String ToString()
         {
             return String.Format("{0} [{1}]", AssemblyName ?? NameSpace, Templates.Count);
             //return base.ToString();
@@ -55,20 +51,8 @@ namespace XTemplate.Templating
         #endregion
 
         #region 调试
-        private static Boolean? _Debug;
         /// <summary>是否调试</summary>
-        public static Boolean Debug
-        {
-            get
-            {
-                if (_Debug != null) return _Debug.Value;
-
-                _Debug = Config.GetConfig<Boolean>("XTemplate.Debug", false);
-
-                return _Debug.Value;
-            }
-            set { _Debug = value; }
-        }
+        public static Boolean Debug { get; set; } = Setting.Current.Debug;
 
         /// <summary>输出日志</summary>
         /// <param name="msg"></param>
@@ -87,13 +71,8 @@ namespace XTemplate.Templating
         #endregion
 
         #region 配置
-        private static String _BaseClassName;
         /// <summary>默认基类名称</summary>
-        public static String BaseClassName
-        {
-            get { return _BaseClassName ?? (_BaseClassName = Config.GetConfig<String>("XTemplate.BaseClassName", String.Empty)); }
-            set { _BaseClassName = value; }
-        }
+        public static String BaseClassName { get; set; } = Setting.Current.BaseClassName;
 
         private static List<String> _References;
         /// <summary>标准程序集引用</summary>
@@ -109,7 +88,7 @@ namespace XTemplate.Templating
                 var names = new List<String>();
 
                 // 加入配置的程序集
-                var ss = Config.GetConfigSplit<String>("XTemplate.References", null);
+                var ss = Setting.Current.References.Split(",", ";");
                 if (ss != null && ss.Length > 0)
                 {
                     foreach (var item in ss)
@@ -129,7 +108,7 @@ namespace XTemplate.Templating
                     {
                         if (String.IsNullOrEmpty(item.Location)) continue;
 
-                        String name = Path.GetFileName(item.Location);
+                        var name = Path.GetFileName(item.Location);
                         if (!String.IsNullOrEmpty(name)) name = name.ToLower();
                         if (names.Contains(name)) continue;
                         names.Add(name);
@@ -156,7 +135,7 @@ namespace XTemplate.Templating
                 _Imports = list;
 
                 // 加入配置的命名空间
-                var ss = Config.GetConfigSplit<String>("XTemplate.Imports", null);
+                var ss = Setting.Current.Imports.Split(",", ";");
                 if (ss != null && ss.Length > 0) list.AddRange(ss);
 
                 // 常用命名空间
@@ -207,7 +186,7 @@ namespace XTemplate.Templating
                         // 遍历所有公开类，导入它们的所有命名空间
                         foreach (var type in asm.GetTypes())
                         {
-                            String name = type.Namespace;
+                            var name = type.Namespace;
                             if (String.IsNullOrEmpty(name)) continue;
                             //if (!name.StartsWith("XCode") && !name.StartsWith("NewLife")) continue;
                             if (!list.Contains(name)) list.Add(name);

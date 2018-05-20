@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -61,25 +62,17 @@ namespace XTemplate.Templating
     public partial class Template : DisposeBase
     {
         #region 属性
-        private CompilerErrorCollection _Errors;
         /// <summary>编译错误集合</summary>
-        public CompilerErrorCollection Errors { get { return _Errors ?? (_Errors = new CompilerErrorCollection()); } }
+        public CompilerErrorCollection Errors { get; private set; } = new CompilerErrorCollection();
 
-        private List<TemplateItem> _Templates;
         /// <summary>模版集合</summary>
-        public List<TemplateItem> Templates { get { return _Templates ?? (_Templates = new List<TemplateItem>()); } }
+        public List<TemplateItem> Templates { get; private set; } = new List<TemplateItem>();
 
-        private List<String> _AssemblyReferences;
         /// <summary>程序集引用</summary>
-        public List<String> AssemblyReferences { get { return _AssemblyReferences ?? (_AssemblyReferences = new List<String>()); } }
+        public List<String> AssemblyReferences { get; private set; } = new List<String>();
 
-        private String _AssemblyName;
         /// <summary>程序集名称。一旦指定，编译时将会生成持久化的模版程序集文件。</summary>
-        public String AssemblyName
-        {
-            get { return _AssemblyName; }
-            set { _AssemblyName = value; }
-        }
+        public String AssemblyName { get; set; }
 
         private Assembly _Assembly;
         /// <summary>程序集</summary>
@@ -89,7 +82,7 @@ namespace XTemplate.Templating
             {
                 if (_Assembly == null && !String.IsNullOrEmpty(AssemblyName))
                 {
-                    String file = AssemblyName;
+                    var file = AssemblyName;
                     if (!Path.IsPathRooted(file)) file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, file);
                     if (!File.Exists(file)) file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.Combine("Bin", AssemblyName));
                     if (File.Exists(file)) _Assembly = Assembly.LoadFile(file);
@@ -121,12 +114,12 @@ namespace XTemplate.Templating
                 {
                     if (!String.IsNullOrEmpty(AssemblyName))
                     {
-                        String name = Path.GetFileNameWithoutExtension(AssemblyName);
+                        var name = Path.GetFileNameWithoutExtension(AssemblyName);
                         _NameSpace = name;
                     }
                     else
                     {
-                        String namespaceName = GetType().Namespace;
+                        var namespaceName = GetType().Namespace;
                         namespaceName += "s";
 
                         _NameSpace = namespaceName;
@@ -137,17 +130,12 @@ namespace XTemplate.Templating
             set { _NameSpace = value; }
         }
 
-        private TemplateStatus _Status;
         /// <summary>模版引擎状态</summary>
-        public TemplateStatus Status
-        {
-            get { return _Status; }
-            set { _Status = value; }
-        }
+        public TemplateStatus Status { get; set; }
         #endregion
 
         #region 创建
-        private static DictionaryCache<String, Template> cache = new DictionaryCache<string, Template>();
+        private static ConcurrentDictionary<String, Template> cache = new ConcurrentDictionary<String, Template>();
         /// <summary>根据名称和模版创建模版实例，带缓存，避免重复编译</summary>
         /// <param name="name">名称</param>
         /// <param name="templates">模版</param>
@@ -156,7 +144,7 @@ namespace XTemplate.Templating
         {
             if (templates == null || templates.Length < 1) throw new ArgumentNullException("templates");
 
-            var dic = new Dictionary<string, string>();
+            var dic = new Dictionary<String, String>();
 
             var prefix = !String.IsNullOrEmpty(name) ? name : "Class";
 
@@ -166,7 +154,7 @@ namespace XTemplate.Templating
             }
             else
             {
-                for (int i = 0; i < templates.Length; i++)
+                for (var i = 0; i < templates.Length; i++)
                 {
                     dic.Add(prefix + (i + 1), templates[i]);
                 }
@@ -191,12 +179,11 @@ namespace XTemplate.Templating
             }
 
             var hash = Hash(sb.ToString());
-
-            return cache.GetItem<IDictionary<String, String>>(hash, templates, delegate(String key, IDictionary<String, String> contents)
+            return cache.GetOrAdd(hash, k =>
             {
                 var entity = new Template();
 
-                foreach (var item in contents)
+                foreach (var item in templates)
                 {
                     entity.AddTemplateItem(item.Key, item.Value);
                 }
@@ -209,7 +196,7 @@ namespace XTemplate.Templating
 
         /// <summary>释放提供者</summary>
         /// <param name="disposing"></param>
-        protected override void OnDispose(bool disposing)
+        protected override void OnDispose(Boolean disposing)
         {
             base.OnDispose(disposing);
 
@@ -291,7 +278,7 @@ namespace XTemplate.Templating
 
             if (Status >= TemplateStatus.Process) return;
 
-            for (int i = 0; i < Templates.Count; i++)
+            for (var i = 0; i < Templates.Count; i++)
             {
                 Process(Templates[i]);
             }
@@ -397,7 +384,7 @@ namespace XTemplate.Templating
 
             var directives = new String[] { "template", "assembly", "import", "include", "var" };
 
-            for (Int32 i = 0; i < item.Blocks.Count; i++)
+            for (var i = 0; i < item.Blocks.Count; i++)
             {
                 var block = item.Blocks[i];
                 if (block.Type != BlockType.Directive) continue;
@@ -436,7 +423,7 @@ namespace XTemplate.Templating
             #region 包含include
             if (directive.Name.EqualIgnoreCase("include"))
             {
-                String name = directive.GetParameter("name");
+                var name = directive.GetParameter("name");
                 // 可能采用了相对路径
                 if (!File.Exists(name)) name = Path.Combine(Path.GetDirectoryName(item.Name), name);
 
@@ -470,7 +457,7 @@ namespace XTemplate.Templating
 
             if (directive.Name.EqualIgnoreCase("assembly"))
             {
-                String name = directive.GetParameter("name");
+                var name = directive.GetParameter("name");
                 if (!AssemblyReferences.Contains(name)) AssemblyReferences.Add(name);
             }
             else if (directive.Name.EqualIgnoreCase("import"))
@@ -556,7 +543,7 @@ namespace XTemplate.Templating
             else
                 typeDec.BaseTypes.Add(new CodeTypeReference(typeof(TemplateBase)));
 
-            if (!String.IsNullOrEmpty(ti.Name)) typeDec.LinePragma = new CodeLinePragma(ti.Name, 1);
+            if (lineNumbers && !String.IsNullOrEmpty(ti.Name)) typeDec.LinePragma = new CodeLinePragma(ti.Name, 1);
 
             // Render方法
             CreateRenderMethod(ti.Blocks, lineNumbers, typeDec);
@@ -817,7 +804,7 @@ namespace XTemplate.Templating
                 if (sb.Length > 0) sb.AppendLine();
                 sb.Append(item.Source);
             }
-            String key = Hash(sb.ToString());
+            var key = Hash(sb.ToString());
 
             Assembly assembly = null;
             if (asmCache.TryGetValue(key, out assembly)) return assembly;
@@ -855,31 +842,33 @@ namespace XTemplate.Templating
                 //var sb = new StringBuilder();
 
                 #region 调试状态，把生成的类文件和最终dll输出到XTemp目录下
-                var tempPath = XTrace.TempPath;
+                var tempPath = XTrace.TempPath.GetFullPath().EnsureDirectory(false);
                 //if (!String.IsNullOrEmpty(outputAssembly)) tempPath = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(outputAssembly));
                 if (!String.IsNullOrEmpty(outputAssembly) && !outputAssembly.EqualIgnoreCase(".dll")) tempPath = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(outputAssembly));
 
                 //if (!String.IsNullOrEmpty(tempPath) && !Directory.Exists(tempPath)) Directory.CreateDirectory(tempPath);
 
-                var srcpath = tempPath.CombinePath("src").EnsureDirectory(false);
+                //var srcpath = tempPath.CombinePath("src").EnsureDirectory(false);
 
                 var files = new List<String>();
                 foreach (var item in tmp.Templates)
                 {
                     // 输出模版内容，为了调试使用
-                    File.WriteAllText(tempPath.CombinePath(item.Name), item.Content);
+                    File.WriteAllText(tempPath.CombinePath(item.Name).EnsureDirectory(true), item.Content);
                     if (item.Included) continue;
 
-                    String name = item.Name.EndsWithIgnoreCase(".cs") ? item.Name : item.ClassName;
+                    var name = item.Name.EndsWithIgnoreCase(".cs") ? item.Name : item.ClassName;
                     // 猜测后缀
-                    Int32 p = name.LastIndexOf("_");
+                    var p = name.LastIndexOf("_");
                     if (p > 0 && name.Length - p <= 5)
                         name = name.Substring(0, p) + "." + name.Substring(p + 1, name.Length - p - 1);
                     else if (!name.EndsWithIgnoreCase(".cs"))
                         name += ".cs";
 
                     //name = Path.Combine(tempPath, name);
-                    name = srcpath.CombinePath(name);
+                    //name = srcpath.CombinePath(name);
+                    // 必须放在同一个目录，编译时会搜索源码所在目录
+                    name = tempPath.CombinePath(Path.GetFileNameWithoutExtension(name) + "_src" + Path.GetExtension(name));
                     File.WriteAllText(name, item.Source);
 
                     //sb.AppendLine(item.Source);
@@ -891,7 +880,7 @@ namespace XTemplate.Templating
                 {
                     options.TempFiles = new TempFileCollection(tempPath, false);
                     options.OutputAssembly = Path.Combine(tempPath, outputAssembly);
-                    options.GenerateInMemory = true;
+                    //options.GenerateInMemory = true;
                     options.IncludeDebugInformation = true;
                 }
 
@@ -920,7 +909,7 @@ namespace XTemplate.Templating
 
                     if (!error.IsWarning)
                     {
-                        String msg = error.ToString();
+                        var msg = error.ToString();
                         if (sb.Length < 1)
                         {
                             String code = null;
@@ -1079,7 +1068,7 @@ namespace XTemplate.Templating
                     var n = 0;
                     foreach (var type in ts)
                     {
-                        if (!typeof(TemplateBase).IsAssignableFrom(type)) continue;
+                        if (!type.As<TemplateBase>()) continue;
 
                         className = type.FullName;
                         if (n++ > 1) break;
@@ -1143,7 +1132,7 @@ namespace XTemplate.Templating
         /// <param name="sender"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        private static Assembly currentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        private static Assembly currentDomain_AssemblyResolve(Object sender, ResolveEventArgs args)
         {
             var name = args.Name;
             if (name.IsNullOrWhiteSpace()) return null;
