@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29025.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Others", "Others", "{32891F65-FBA1-42B2-918E-61F3A9623F2A}"
 	ProjectSection(SolutionItems) = preProject
@@ -13,8 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Others", "Others", "{32891F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XTemplate", "XTemplate\XTemplate.csproj", "{55BA37EE-01A2-438F-A0FB-6B57440BF2F0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XTemplate40", "XTemplate\XTemplate40.csproj", "{D35F9318-4346-4EB8-8C2B-49C487CE3F36}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,10 +23,6 @@ Global
 		{55BA37EE-01A2-438F-A0FB-6B57440BF2F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55BA37EE-01A2-438F-A0FB-6B57440BF2F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55BA37EE-01A2-438F-A0FB-6B57440BF2F0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D35F9318-4346-4EB8-8C2B-49C487CE3F36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D35F9318-4346-4EB8-8C2B-49C487CE3F36}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D35F9318-4346-4EB8-8C2B-49C487CE3F36}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D35F9318-4346-4EB8-8C2B-49C487CE3F36}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

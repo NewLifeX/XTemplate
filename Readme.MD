@@ -10,55 +10,41 @@ QQ群：1600800
 国内 http://git.NewLifeX.com/NewLife/X  
 国外 https://github.com/NewLifeX/X  
 
-## 组件各组成部分
-### 核心库 NewLife.Core
-核心组件，支撑其它所有组件。  
-主要功能包括：  
-+ **[网络库]** 支持企业应用服务十万级并发 Tcp/Udp/Http/WebSocket/IPv6
-+ **[安全]** AES/DES/RC4/RSA/DSA/CRC
-+ **[多线程]** 定时调度TimerX
-+ **[反射]** 快速反射、脚本引擎ScriptEngine、动态对象
-+ **[序列化]** Binary/Json/Xml
-+ **[服务代理]** Windows服务、守护、监控
-+ **[远程过程调用RPC]** Tcp/Udp/Http/Json、身份验证、数据加密
-
-[网络库]:Net/Readme.md "支持企业应用服务十万级并发"
-[安全]:Security/Readme.md
-[多线程]:Threading/Readme.md
-[反射]:Reflection/Readme.md
-[序列化]:Serialization/Readme.md
-[服务代理]:Agent/Readme.md
-[远程过程调用RPC]:Remoting/Readme.md
-
-### Android库 NewLife.Android
-Android版核心库，共用代码，供Xamarin Android开发使用
-
-### iOS库 NewLife.iOS
-iOS版核心库，共用代码，供Xamarin iOS开发使用
-
-### [数据中间件 NewLife.XCode]
-主要特点：  
-1，设计极致的缓存，超高性能  
-2，反向工程，根据实体类主动建立数据库表结构并初始化数据，支持8种数据库  
-3，无限分表分库，支持任意数据库，无需修改业务代码  
-
-### 魔方Mvc管理后台 NewLife.Cube
-酷比魔方，Bootstrap风格的Mvc权限管理后台，集成管理员、角色、菜单、权限、日志等基本功能模块。
-
-### 网络协议库 NewLife.Net
-支持DNS/DHCP等几十种常见以太网协议的解析
-
-### 码神工具 XCoder
-由一系列开发者工具组成：  
-1，数据模型工具  
-2，网络调试工具  
-3，串口调试工具  
-4，正则表达式工具  
-5，图标处理工具  
-6，文件信息处理工具  
-
 ### 模版引擎 XTemplate
 使用C#编写模版，T4风格，主要用于生成实体代码和页面  
 
-### 消息队列 NewLife.MQ
-发布与订阅  
+## 新生命开源项目矩阵
+各项目默认支持net4.5/net4.0/netstandard2.0  
+
+|                               项目                               | 年份  |  状态  | .NET Core | 说明                                               |
+| :--------------------------------------------------------------: | :---: | :----: | :-------: | -------------------------------------------------- |
+|                             基础组件                             |       |        |           | 支撑其它中间件以及产品项目                         |
+|          [NewLife.Core](https://github.com/NewLifeX/X)           | 2002  | 维护中 |     √     | 算法、日志、网络、RPC、序列化、缓存、多线程        |
+|              [XCode](https://github.com/NewLifeX/X)              | 2005  | 维护中 |     √     | 数据中间件，MySQL、SQLite、SqlServer、Oracle       |
+|      [NewLife.Net](https://github.com/NewLifeX/NewLife.Net)      | 2005  | 维护中 |     √     | 网络库，千万级吞吐率，学习gRPC、Thrift             |
+|     [NewLife.Cube](https://github.com/NewLifeX/NewLife.Cube)     | 2010  | 维护中 |     √     | Web魔方，权限基础框架，集成OAuth                   |
+|                              中间件                              |       |        |           | 对接各知名中间件平台                               |
+|    [NewLife.Redis](https://github.com/NewLifeX/NewLife.Redis)    | 2017  | 维护中 |     √     | Redis客户端，微秒级延迟，百亿级项目验证            |
+| [NewLife.RocketMQ](https://github.com/NewLifeX/NewLife.RocketMQ) | 2018  | 维护中 |     √     | 支持Apache RocketMQ和阿里云消息队列                |
+|   [NewLife.Thrift](https://github.com/NewLifeX/NewLife.Thrift)   | 2019  | 维护中 |     √     | Thrift协议实现                                     |
+|     [NewLife.Hive](https://github.com/NewLifeX/NewLife.Hive)     | 2019  | 维护中 |     √     | 纯托管读写Hive，Hadoop数据仓库，基于Thrift协议     |
+|       [NewLife.MQ](https://github.com/NewLifeX/NewLife.MQ)       | 2016  | 维护中 |     √     | 轻量级消息队列                                     |
+|             [NoDb](https://github.com/NewLifeX/NoDb)             | 2017  | 开发中 |     √     | NoSQL数据库，百万级kv读写性能，持久化              |
+|    [NewLife.Cache](https://github.com/NewLifeX/NewLife.Cache)    | 2018  | 维护中 |     √     | 自定义缓存服务器                                   |
+|      [NewLife.Ftp](https://github.com/NewLifeX/NewLife.Ftp)      | 2008  | 维护中 |     √     | Ftp客户端实现                                      |
+|    [NewLife.MySql](https://github.com/NewLifeX/NewLife.MySql)    | 2018  | 开发中 |     √     | MySql驱动                                          |
+|                             产品平台                             |       |        |           | 产品平台级，编译部署即用，个性化自定义             |
+|           [AntJob](https://github.com/NewLifeX/AntJob)           | 2019  | 开发中 |     √     | 蚂蚁调度系统，大数据实时计算平台                   |
+|         [Stardust](https://github.com/NewLifeX/Stardust)         | 2018  | 开发中 |     √     | 星尘，微服务平台，分布式平台                       |
+|            [XLink](https://github.com/NewLifeX/XLink)            | 2016  | 维护中 |     √     | 物联网云平台                                       |
+|           [XProxy](https://github.com/NewLifeX/XProxy)           | 2005  | 维护中 |     √     | 产品级反向代理                                     |
+|          [XScript](https://github.com/NewLifeX/XScript)          | 2010  | 维护中 |     ×     | C#脚本引擎                                         |
+|      [NewLife.DNS](https://github.com/NewLifeX/NewLife.DNS)      | 2011  | 维护中 |     ×     | DNS代理服务器                                      |
+|      [NewLife.CMX](https://github.com/NewLifeX/NewLife.CMX)      | 2013  | 维护中 |     ×     | 内容管理系统                                       |
+|          [SmartOS](https://github.com/NewLifeX/SmartOS)          | 2014  | 保密中 |   C++11   | 嵌入式操作系统，完全独立自主，ARM Cortex-M芯片架构 |
+|         [GitCandy](https://github.com/NewLifeX/GitCandy)         | 2015  | 维护中 |     ×     | Git管理系统                                        |
+|                               其它                               |       |        |           |                                                    |
+|           [XCoder](https://github.com/NewLifeX/XCoder)           | 2006  | 维护中 |     ×     | 码神工具，开发者必备                               |
+|        [XTemplate](https://github.com/NewLifeX/XTemplate)        | 2008  | 维护中 |     ×     | 模版引擎，T4(Text Template)语法                    |
+|       [X组件 .NET2.0](https://github.com/NewLifeX/X_NET20)       | 2002  | 存档中 |  .NET2.0  | 日志、网络、RPC、序列化、缓存、Windows服务、多线程 |
+|       [X组件 .NET4.0](https://github.com/NewLifeX/X_NET40)       | 2002  | 存档中 |  .NET4.0  | 日志、网络、RPC、序列化、缓存、Windows服务、多线程 |
