@@ -50,10 +50,7 @@ namespace XTemplate.Templating
         #region 方法
         /// <summary>已重载。</summary>
         /// <returns></returns>
-        public override String ToString()
-        {
-            return Name;
-        }
+        public override String ToString() => Name;
         #endregion
     }
 }

@@ -9,8 +9,6 @@ using System.Reflection;
 using System.Text;
 using Microsoft.CSharp;
 using NewLife;
-using NewLife.Collections;
-using NewLife.Log;
 using NewLife.Reflection;
 
 namespace XTemplate.Templating
@@ -89,19 +87,15 @@ namespace XTemplate.Templating
                 }
                 return _Assembly;
             }
-            private set { _Assembly = value; }
+            private set => _Assembly = value;
         }
 
         private CodeDomProvider _Provider;
         /// <summary>代码生成提供者</summary>
         private CodeDomProvider Provider
         {
-            get { return _Provider ?? (_Provider = new CSharpCodeProvider()); }
-            set
-            {
-                if (_Provider != null && value == null) _Provider.Dispose();
-                _Provider = value;
-            }
+            get => _Provider ??= new CSharpCodeProvider();
+            set => _Provider = value;
         }
 
         private String _NameSpace;
@@ -127,7 +121,7 @@ namespace XTemplate.Templating
                 }
                 return _NameSpace;
             }
-            set { _NameSpace = value; }
+            set => _NameSpace = value;
         }
 
         /// <summary>模版引擎状态</summary>
@@ -135,7 +129,7 @@ namespace XTemplate.Templating
         #endregion
 
         #region 创建
-        private static ConcurrentDictionary<String, Template> cache = new ConcurrentDictionary<String, Template>();
+        private static readonly ConcurrentDictionary<String, Template> cache = new ConcurrentDictionary<String, Template>();
         /// <summary>根据名称和模版创建模版实例，带缓存，避免重复编译</summary>
         /// <param name="name">名称</param>
         /// <param name="templates">模版</param>
@@ -194,22 +188,14 @@ namespace XTemplate.Templating
             });
         }
 
-        /// <summary>释放提供者</summary>
+        /// <summary>销毁</summary>
         /// <param name="disposing"></param>
-        protected override void OnDispose(Boolean disposing)
+        protected override void Dispose(Boolean disposing)
         {
-            base.OnDispose(disposing);
+            base.Dispose(disposing);
 
-            try
-            {
-                if (_Provider != null)
-                {
-                    //_Provider.Dispose();
-                    //_Provider = null;
-                    Provider = null;
-                }
-            }
-            catch { }
+            _Provider.TryDispose();
+            _Provider = null;
         }
         #endregion
 
@@ -250,10 +236,7 @@ namespace XTemplate.Templating
         /// <param name="template">模版内容</param>
         /// <param name="data">模版参数</param>
         /// <returns></returns>
-        public static String ProcessTemplate(String template, IDictionary<String, Object> data)
-        {
-            return ProcessTemplate(null, template, data);
-        }
+        public static String ProcessTemplate(String template, IDictionary<String, Object> data) => ProcessTemplate(null, template, data);
 
         /// <summary>通过指定模版内容和传入模版的参数处理模版，返回结果</summary>
         /// <param name="name">模版名字</param>
@@ -427,25 +410,27 @@ namespace XTemplate.Templating
                 // 可能采用了相对路径
                 if (!File.Exists(name)) name = Path.Combine(Path.GetDirectoryName(item.Name), name);
 
-                String content = null;
+                //String content = null;
                 var ti = FindTemplateItem(name);
                 if (ti != null)
                 {
                     ti.Included = true;
-                    content = ti.Content;
+                    //content = ti.Content;
                 }
                 else
                 {
                     // 尝试读取文件
                     if (File.Exists(name))
                     {
-                        ti = new TemplateItem();
-                        ti.Name = name;
-                        ti.Content = File.ReadAllText(name);
+                        ti = new TemplateItem
+                        {
+                            Name = name,
+                            Content = File.ReadAllText(name)
+                        };
                         Templates.Add(ti);
 
                         ti.Included = true;
-                        content = ti.Content;
+                        //content = ti.Content;
                     }
                 }
                 // 允许内容为空
@@ -469,8 +454,7 @@ namespace XTemplate.Templating
                 if (item.Processed) throw new TemplateException(directive.Block, "多个模版指令！");
 
                 // 由模版指令指定类名
-                var name = "";
-                if (directive.TryGetParameter("name", out name) && !String.IsNullOrEmpty(name)) item.ClassName = name;
+                if (directive.TryGetParameter("name", out var name) && !String.IsNullOrEmpty(name)) item.ClassName = name;
 
                 //item.BaseClassName = directive.GetParameter("inherits");
                 if (directive.TryGetParameter("inherits", out name)) item.BaseClassName = name;
@@ -497,7 +481,7 @@ namespace XTemplate.Templating
         /// <summary>导入某类型，导入程序集引用及命名空间引用，主要处理泛型</summary>
         /// <param name="item"></param>
         /// <param name="type">类型</param>
-        void ImportType(TemplateItem item, Type type)
+        private void ImportType(TemplateItem item, Type type)
         {
             String name = null;
             try
@@ -531,8 +515,10 @@ namespace XTemplate.Templating
             {
                 if (!String.IsNullOrEmpty(str)) codeNamespace.Imports.Add(new CodeNamespaceImport(str));
             }
-            var typeDec = new CodeTypeDeclaration(ti.ClassName);
-            typeDec.IsClass = true;
+            var typeDec = new CodeTypeDeclaration(ti.ClassName)
+            {
+                IsClass = true
+            };
             codeNamespace.Types.Add(typeDec);
 
             // 基类
@@ -549,10 +535,12 @@ namespace XTemplate.Templating
             CreateRenderMethod(ti.Blocks, lineNumbers, typeDec);
 
             // 代码生成选项
-            var options = new CodeGeneratorOptions();
-            options.VerbatimOrder = true;
-            options.BlankLinesBetweenMembers = false;
-            options.BracingStyle = "C";
+            var options = new CodeGeneratorOptions
+            {
+                VerbatimOrder = true,
+                BlankLinesBetweenMembers = false,
+                BracingStyle = "C"
+            };
 
             // 其它类成员代码块
             var firstMemberFound = false;
@@ -592,11 +580,9 @@ namespace XTemplate.Templating
             }
 
             // 输出
-            using (var writer = new StringWriter())
-            {
-                provider.GenerateCodeFromNamespace(codeNamespace, new IndentedTextWriter(writer), options);
-                return writer.ToString();
-            }
+            using var writer = new StringWriter();
+            provider.GenerateCodeFromNamespace(codeNamespace, new IndentedTextWriter(writer), options);
+            return writer.ToString();
         }
 
         /// <summary>生成Render方法</summary>
@@ -725,21 +711,17 @@ namespace XTemplate.Templating
                 {
                     var expression = new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "Write", new CodeExpression[] { new CodePrimitiveExpression(block.Text) });
                     var statement = new CodeExpressionStatement(expression);
-                    using (var writer = new StringWriter())
-                    {
-                        provider.GenerateCodeFromStatement(statement, writer, options);
-                        member = new CodeSnippetTypeMember(writer.ToString());
-                    }
+                    using var writer = new StringWriter();
+                    provider.GenerateCodeFromStatement(statement, writer, options);
+                    member = new CodeSnippetTypeMember(writer.ToString());
                 }
                 else if (block.Type == BlockType.Expression)
                 {
                     var expression = new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "Write", new CodeExpression[] { new CodeArgumentReferenceExpression(block.Text.Trim()) });
                     var statement = new CodeExpressionStatement(expression);
-                    using (var writer = new StringWriter())
-                    {
-                        provider.GenerateCodeFromStatement(statement, writer, options);
-                        member = new CodeSnippetTypeMember(writer.ToString());
-                    }
+                    using var writer = new StringWriter();
+                    provider.GenerateCodeFromStatement(statement, writer, options);
+                    member = new CodeSnippetTypeMember(writer.ToString());
                 }
                 else if (block.Type == BlockType.Statement)
                 {
@@ -790,7 +772,7 @@ namespace XTemplate.Templating
             return asm;
         }
 
-        private static Dictionary<String, Assembly> asmCache = new Dictionary<String, Assembly>();
+        private static readonly Dictionary<String, Assembly> asmCache = new Dictionary<String, Assembly>();
         private static Assembly Compile(String outputAssembly, IEnumerable<String> references, CodeDomProvider provider, CompilerErrorCollection errors, Template tmp)
         {
             //String key = outputAssembly;
@@ -806,8 +788,7 @@ namespace XTemplate.Templating
             }
             var key = Hash(sb.ToString());
 
-            Assembly assembly = null;
-            if (asmCache.TryGetValue(key, out assembly)) return assembly;
+            if (asmCache.TryGetValue(key, out var assembly)) return assembly;
             lock (asmCache)
             {
                 if (asmCache.TryGetValue(key, out assembly)) return assembly;
@@ -842,7 +823,7 @@ namespace XTemplate.Templating
                 //var sb = new StringBuilder();
 
                 #region 调试状态，把生成的类文件和最终dll输出到XTemp目录下
-                var tempPath = XTrace.TempPath.GetFullPath().EnsureDirectory(false);
+                var tempPath = NewLife.Setting.Current.DataPath.GetFullPath().EnsureDirectory(false);
                 //if (!String.IsNullOrEmpty(outputAssembly)) tempPath = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(outputAssembly));
                 if (!String.IsNullOrEmpty(outputAssembly) && !outputAssembly.EqualIgnoreCase(".dll")) tempPath = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(outputAssembly));
 
@@ -934,8 +915,10 @@ namespace XTemplate.Templating
                 }
                 if (sb.Length > 0)
                 {
-                    var ex = new TemplateException(sb.ToString());
-                    ex.Error = err;
+                    var ex = new TemplateException(sb.ToString())
+                    {
+                        Error = err
+                    };
                     throw ex;
                 }
             }
@@ -964,7 +947,7 @@ namespace XTemplate.Templating
         /// <param name="name">名称</param>
         /// <param name="lineNumber"></param>
         /// <returns></returns>
-        String FindBlockCode(String name, Int32 lineNumber)
+        private String FindBlockCode(String name, Int32 lineNumber)
         {
             if (!String.IsNullOrEmpty(name))
             {
@@ -999,7 +982,7 @@ namespace XTemplate.Templating
             return null;
         }
 
-        static String FindBlockCodeInItem(String name, Int32 lineNumber, TemplateItem item)
+        private static String FindBlockCodeInItem(String name, Int32 lineNumber, TemplateItem item)
         {
             var nocmpName = String.IsNullOrEmpty(name);
             for (var i = 0; i < item.Blocks.Count; i++)
@@ -1108,7 +1091,7 @@ namespace XTemplate.Templating
         public String Render(String className, IDictionary<String, Object> data)
         {
             // 2012.11.06 尝试共享已加载的程序集
-            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(currentDomain_AssemblyResolve);
+            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(CurrentDomain_AssemblyResolve);
 
             var temp = CreateInstance(className);
             temp.Data = data;
@@ -1124,7 +1107,7 @@ namespace XTemplate.Templating
             }
             finally
             {
-                AppDomain.CurrentDomain.AssemblyResolve -= new ResolveEventHandler(currentDomain_AssemblyResolve);
+                AppDomain.CurrentDomain.AssemblyResolve -= new ResolveEventHandler(CurrentDomain_AssemblyResolve);
             }
         }
 
@@ -1132,7 +1115,7 @@ namespace XTemplate.Templating
         /// <param name="sender"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        private static Assembly currentDomain_AssemblyResolve(Object sender, ResolveEventArgs args)
+        private static Assembly CurrentDomain_AssemblyResolve(Object sender, ResolveEventArgs args)
         {
             var name = args.Name;
             if (name.IsNullOrWhiteSpace()) return null;
